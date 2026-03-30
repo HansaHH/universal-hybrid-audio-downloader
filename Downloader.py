@@ -1,145 +1,204 @@
-import tkinter as tk
-from tkinter import messagebox, filedialog
-import yt_dlp
 import os
 import sys
 import threading
 import time
+import customtkinter as ctk
+from tkinter import filedialog
+import yt_dlp
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 
-# --- FFmpeg Path Resolution ---
-# PyInstaller eken hadana temporary path eka (MEIPASS) hoyaganna logic eka
-if getattr(sys, 'frozen', False):
-    application_path = sys._MEIPASS
-else:
-    application_path = os.path.dirname(os.path.abspath(__file__))
+# Global UI Configuration
+ctk.set_appearance_mode("System")
+ctk.set_default_color_theme("blue")
 
-# Global variables
-stop_requested = False
+def get_ffmpeg_path():
+    """ 
+    This function finds the actual binary file path of FFmpeg.
+    Crucial for true portability.
+    """
+    if getattr(sys, 'frozen', False):
+        # Path when running from an EXE (Bundled temporary folder)
+        # BUG FIX: We now return the full path to the binary file itself
+        return os.path.join(sys._MEIPASS, "ffmpeg.exe") 
+    return "ffmpeg.exe" # Path when running from script (must be in the same folder)
 
-def sarigama_logic(target_url, save_path):
-    global stop_requested
-    options = webdriver.ChromeOptions()
-    # options.add_argument('--headless') # Browser eka penne nathi wenna meka danna puluwan
-    prefs = {"download.default_directory": save_path, "download.prompt_for_download": False}
-    options.add_experimental_option("prefs", prefs)
-    
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-    try:
-        driver.get(target_url)
-        time.sleep(5)
-        songs = driver.find_elements(By.XPATH, "//a[contains(@href, '/sinhala-song/')]")
-        links = list(set([s.get_attribute('href') for s in songs]))
+class SuccessDialog(ctk.CTkToplevel):
+    """ Custom window that appears after a successful download. """
+    def __init__(self, master, folder_path, count, **kwargs):
+        super().__init__(master, **kwargs)
+        self.title("Download Finished")
+        self.geometry("500x230")
+        self.attributes("-topmost", True)
+        ctk.CTkLabel(self, text="🎉 Success !!!", font=ctk.CTkFont(size=22, weight="bold")).pack(pady=(25, 10))
+        ctk.CTkLabel(self, text=f"Total {count} songs saved to:\n{folder_path}", wraplength=450).pack(pady=10, padx=25)
+        ctk.CTkButton(self, text="OK", width=120, command=self.destroy).pack(pady=(15, 20))
 
-        for index, link in enumerate(links, 1):
-            if stop_requested: break
+class MusicDownloaderApp(ctk.CTk):
+    def __init__(self):
+        super().__init__()
+        self.title("Universal Music Downloader v8.0")
+        self.geometry("600x520")
+        self.grid_columnconfigure(0, weight=1)
+        
+        # Theme/Appearance Selector
+        self.theme_menu = ctk.CTkOptionMenu(self, values=["System", "Light", "Dark"], command=lambda m: ctk.set_appearance_mode(m), width=100)
+        self.theme_menu.grid(row=0, column=0, padx=20, pady=10, sticky="ne")
+        ctk.CTkLabel(self, text="Music Downloader", font=ctk.CTkFont(size=26, weight="bold")).grid(row=1, column=0, pady=(10, 20))
+        
+        # URL Input Entry
+        self.url_entry = ctk.CTkEntry(self, placeholder_text="Enter URL (YouTube, Sarigama, etc.)...", width=450)
+        self.url_entry.grid(row=2, column=0, pady=10)
+
+        # Progress Percentage Display
+        self.percentage_label = ctk.CTkLabel(self, text="0.0%", font=ctk.CTkFont(size=16, weight="bold"))
+        self.percentage_label.grid(row=3, column=0, pady=(10, 0))
+
+        # Progress Bar
+        self.progress_bar = ctk.CTkProgressBar(self, width=450)
+        self.progress_bar.grid(row=4, column=0, pady=(5, 15))
+        self.progress_bar.set(0)
+
+        # Activity Status Label
+        self.status_label = ctk.CTkLabel(self, text="Ready", font=ctk.CTkFont(size=13))
+        self.status_label.grid(row=5, column=0, pady=5)
+
+        # Control Buttons Frame
+        self.btn_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.btn_frame.grid(row=6, column=0, pady=20)
+        
+        self.download_btn = ctk.CTkButton(self.btn_frame, text="Download Now", command=self.start_thread, fg_color="#2ecc71", hover_color="#27ae60")
+        self.download_btn.pack(side="left", padx=10)
+        
+        self.stop_btn = ctk.CTkButton(self.btn_frame, text="Stop", command=self.stop_action, fg_color="#e74c3c", hover_color="#c0392b")
+        self.stop_btn.pack(side="left", padx=10)
+
+        self.is_stopping = False
+
+    def progress_hook(self, d):
+        """ Handles real-time progress updates and immediate stopping. """
+        if self.is_stopping:
+            raise Exception("UserStopRequest") # Kills the download immediately
             
-            driver.get(link)
-            time.sleep(2)
+        if d['status'] == 'downloading':
             try:
-                download_btn = driver.find_element(By.PARTIAL_LINK_TEXT, "Download")
-                download_btn.click()
-                time.sleep(3)
-            except:
-                continue
-    finally:
-        driver.quit()
+                total = d.get('total_bytes') or d.get('total_bytes_estimate', 0)
+                downloaded = d.get('downloaded_bytes', 0)
+                if total > 0:
+                    percentage = (downloaded / total) * 100
+                    if percentage > 99.9: percentage = 99.9
+                    self.progress_bar.set(percentage / 100)
+                    self.percentage_label.configure(text=f"{percentage:.1f}%")
+            except: 
+                pass
 
-def download_media():
-    global stop_requested
-    stop_requested = False 
-    
-    url = url_entry.get().strip()
-    if not url or url == "Paste your URL here...":
-        messagebox.showwarning("Warning", "Please enter a valid URL!")
-        return
-
-    save_path = filedialog.askdirectory()
-    if not save_path: return
-
-    status_label.config(text="Processing... please wait.", fg="blue")
-    download_btn.config(state="disabled")
-    stop_btn.config(state="normal")
-    
-    def run_process():
+    def infinite_scraper(self, url):
+        """ Scans a website to find all song links by scrolling to the bottom. """
+        self.status_label.configure(text="Scanning all songs... Please wait.")
+        options = webdriver.ChromeOptions()
+        options.add_argument("--headless")
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+        
+        links = []
         try:
-            if "sarigama.lk" in url:
-                sarigama_logic(url, save_path.replace("/", "\\"))
-            else:
+            driver.get(url)
+            time.sleep(5)
+            last_height = driver.execute_script("return document.body.scrollHeight")
+            while True:
+                if self.is_stopping: break
+                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                time.sleep(3)
+                new_height = driver.execute_script("return document.body.scrollHeight")
+                if new_height == last_height: break
+                last_height = new_height
+                
+            elements = driver.find_elements(By.XPATH, "//a[contains(@href, '/sinhala-song/') or contains(@href, '/song/')]")
+            links = list(set([s.get_attribute('href') for s in elements]))
+        except Exception as e:
+            print(f"Scraper Error: {e}")
+        finally:
+            driver.quit()
+        return links
+
+    def download_logic(self):
+        """ Core logic for processing URLs and managing the download queue. """
+        url = self.url_entry.get().strip()
+        if not url: return
+
+        save_path = filedialog.askdirectory()
+        if not save_path: return
+
+        self.download_btn.configure(state="disabled")
+        self.is_stopping = False
+        
+        target_links = [url]
+        if "sarigama.lk" in url and ("/artist/" in url or "/album/" in url):
+            target_links = self.infinite_scraper(url)
+
+        if not target_links:
+            self.status_label.configure(text="No songs found! Check URL.")
+            self.download_btn.configure(state="normal")
+            return
+
+        total_songs = len(target_links)
+        success_count = 0
+        
+        # FIX: The loop is now bulletproof. If one song fails, it continues to the next.
+        for i, link in enumerate(target_links):
+            if self.is_stopping: break
+            
+            self.status_label.configure(text=f"Downloading {i+1} of {total_songs}...")
+            
+            try:
                 ydl_opts = {
                     'format': 'bestaudio/best',
-                    'outtmpl': f'{save_path}/%(title)s.%(ext)s',
-                    'ffmpeg_location': application_path,  # <--- Bundled FFmpeg path eka methanata denawa
+                    'outtmpl': os.path.join(save_path, '%(title)s.%(ext)s'),
+                    'ffmpeg_location': get_ffmpeg_path(),
+                    'progress_hooks': [self.progress_hook],
+                    'ignoreerrors': True, # FIX: Don't crash on bad links
+                    'download_archive': os.path.join(save_path, 'download_history.txt'),
                     'postprocessors': [{'key': 'FFmpegExtractAudio','preferredcodec': 'mp3','preferredquality': '192'}],
                 }
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    ydl.download([url])
-            
-            if stop_requested:
-                status_label.config(text="Stopped by User", fg="orange")
-            else:
-                status_label.config(text="Process Finished!", fg="green")
-                messagebox.showinfo("Success", "Task completed!")
                 
-        except Exception as e:
-            status_label.config(text="Error!", fg="red")
-            messagebox.showerror("Error", str(e))
-        finally:
-            download_btn.config(state="normal")
-            stop_btn.config(state="disabled")
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    ydl.download([link])
+                
+                success_count += 1
+                
+            except Exception as e:
+                # If user clicked stop, break the whole loop
+                if "UserStopRequest" in str(e):
+                    break
+                else:
+                    # If it's just a broken song, skip it and continue
+                    print(f"Skipping a failed song: {e}")
+                    continue
 
-    threading.Thread(target=run_process).start()
+        # Final UI Updates after the loop finishes or stops
+        if self.is_stopping:
+            self.status_label.configure(text="Download Stopped By User.")
+        else:
+            self.progress_bar.set(1.0)
+            self.percentage_label.configure(text="100.0%")
+            if success_count > 0:
+                self.status_label.configure(text="Finished Successfully!")
+                SuccessDialog(self, save_path, success_count)
+            else:
+                self.status_label.configure(text="Failed to download any songs.")
+                
+        self.download_btn.configure(state="normal")
 
-def request_stop():
-    global stop_requested
-    stop_requested = True
-    status_label.config(text="Stopping... please wait.", fg="orange")
-    stop_btn.config(state="disabled")
+    def start_thread(self):
+        """ Runs the download process in a background thread. """
+        threading.Thread(target=self.download_logic, daemon=True).start()
 
-# --- UI Placeholder Logic ---
-def on_entry_click(event):
-    if url_entry.get() == 'Paste your URL here...':
-       url_entry.delete(0, "end") 
-       url_entry.insert(0, '') 
-       url_entry.config(fg = 'black')
+    def stop_action(self):
+        """ Triggers the stop flag to kill active downloads. """
+        self.is_stopping = True
+        self.status_label.configure(text="Stopping immediately...")
 
-def on_focusout(event):
-    if url_entry.get() == '':
-        url_entry.insert(0, 'Paste your URL here...')
-        url_entry.config(fg = 'grey')
-
-# --- UI Setup ---
-root = tk.Tk()
-root.title("Universal Music Downloader v3.0 (Portable)")
-root.geometry("550x320")
-root.configure(bg="#f0f0f0")
-
-tk.Label(root, text="Universal Music Downloader", font=("Segoe UI", 18, "bold"), bg="#f0f0f0").pack(pady=15)
-
-# Label for Input
-tk.Label(root, text="Enter URL (YouTube, Sarigama, etc.):", font=("Segoe UI", 10), bg="#f0f0f0").pack()
-
-# URL Entry with Placeholder
-url_entry = tk.Entry(root, width=60, font=("Segoe UI", 10), fg='grey', bd=2, relief="groove")
-url_entry.insert(0, 'Paste your URL here...')
-url_entry.bind('<FocusIn>', on_entry_click)
-url_entry.bind('<FocusOut>', on_focusout)
-url_entry.pack(pady=10, padx=20)
-
-# Buttons Frame
-btn_frame = tk.Frame(root, bg="#f0f0f0")
-btn_frame.pack(pady=20)
-
-download_btn = tk.Button(btn_frame, text="Download Now", command=download_media, bg="#28a745", fg="white", width=15, height=2, font=("Segoe UI", 10, "bold"), relief="flat")
-download_btn.grid(row=0, column=0, padx=10)
-
-stop_btn = tk.Button(btn_frame, text="Stop", command=request_stop, bg="#dc3545", fg="white", width=15, height=2, font=("Segoe UI", 10, "bold"), relief="flat", state="disabled")
-stop_btn.grid(row=0, column=1, padx=10)
-
-status_label = tk.Label(root, text="Ready", font=("Segoe UI", 10), fg="gray", bg="#f0f0f0")
-status_label.pack(pady=5)
-
-root.mainloop()
+if __name__ == "__main__":
+    app = MusicDownloaderApp()
+    app.mainloop()

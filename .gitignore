@@ -4,3 +4,5 @@ dist/
 __pycache__/
 *.spec
 ffmpeg.exe
+ffprobe.exe
+download_history.txt
