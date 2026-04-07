@@ -12,9 +12,10 @@ Built with Python, this tool combines the power of `yt-dlp` and `Selenium` with 
 
 ## ✨ Key Features
 
-- **🚀 True Portability:** No installation required! Everything (including Python and FFmpeg) is bundled into a single, ready-to-use `.exe` file.
+- **🚀 True Portability (Upgraded):** No installation required! Everything—including Python, FFmpeg, and **Node.js**—is bundled into a single, ready-to-use `.exe` file.
+- **🤖 YouTube Anti-Bot Bypass (NEW in v11.0):** Features an embedded Node.js runtime to automatically solve YouTube's new JavaScript security challenges. No external cookies or Node.js installations required!
 - **🕸️ Infinite Scraper Engine:** Automatically scrolls and scrapes all valid song links from an entire artist, category, or album page on complex platforms like Sarigama.lk.
-- **🧠 Smart Download Tracker (NEW):** Remembers previously downloaded songs and skips them automatically to save your data and time!
+- **🧠 Smart Download Tracker:** Remembers previously downloaded songs and skips them automatically to save your data and time!
 - **🛡️ Bulletproof Downloading:** Automatically skips broken or restricted links (`ignoreerrors: True`) and continues downloading the rest of the playlist without crashing.
 - **🛑 Immediate Stop:** Instantly halt the entire download process at any time with a single click.
 - **🎨 Modern UI:** A clean, dark/light mode compatible user interface built with CustomTkinter, featuring real-time status updates and smooth animations.
@@ -25,8 +26,8 @@ Built with Python, this tool combines the power of `yt-dlp` and `Selenium` with 
 
 ## 🚀 How to Use (For Users)
 
-1. **Download:** Go to the [Releases](https://github.com/HansaHH/universal-hybrid-audio-downloader/releases) section and download the latest `MusicDownloader.exe`.
-2. **Run:** Double-click the executable (No Python or FFmpeg installation needed).
+1. **Download:** Go to the [Releases](https://github.com/HansaHH/universal-hybrid-audio-downloader/releases) section and download the latest `.exe` file.
+2. **Run:** Double-click the executable (No Python, FFmpeg, or Node.js installation needed!).
 3. **Paste Link:** Enter the URL of the song, YouTube playlist, or a full artist/album page.
 4. **Download:** Click "Download" and let the app do the work! *(A `download_history.txt` file will automatically track your downloads so you never download duplicates).*
 
@@ -38,6 +39,7 @@ Built with Python, this tool combines the power of `yt-dlp` and `Selenium` with 
 - **GUI:** CustomTkinter (Modern, hardware-accelerated UI)
 - **Web Automation:** Selenium & WebDriver Manager (For headless web scraping)
 - **Audio Extraction:** yt-dlp
+- **Anti-Bot Engine:** Node.js (Embedded)
 - **Dependencies:** Bundled FFmpeg & FFprobe for seamless audio conversion
 - **Bundler:** PyInstaller
 
