@@ -5,4 +5,6 @@ __pycache__/
 *.spec
 ffmpeg.exe
 ffprobe.exe
+node.exe
+*.exe
 download_history.txt
