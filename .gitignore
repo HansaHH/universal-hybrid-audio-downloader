@@ -1,10 +1,23 @@
+# Python Environment
 .venv/
+__pycache__/
+*.pyc
+
+# PyInstaller Build Files
 build/
 dist/
-__pycache__/
 *.spec
+
+# Large Binaries (Don't upload these, they can be downloaded)
 ffmpeg.exe
 ffprobe.exe
 node.exe
+yt-dlp.exe
 *.exe
+
+# App specific temporary & history files
 download_history.txt
+youtube_history.txt
+yt-dlp.tmp
+*.part
+*.ytdl
