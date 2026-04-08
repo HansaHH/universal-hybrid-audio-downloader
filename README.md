@@ -6,30 +6,35 @@
 
 A powerful, modern, and fully portable desktop application to download high-quality music from **YouTube**, **Sarigama.lk**, and many other platforms. 
 
-Built with Python, this tool combines the power of `yt-dlp` and `Selenium` with a sleek `CustomTkinter` interface to provide a seamless downloading experience.
+Built with Python, this tool combines the power of `yt-dlp` and `Selenium` with a sleek `CustomTkinter` interface to provide a super smooth downloading experience.
 
 ---
 
-## ✨ Key Features
+## ✨ Key Features (Updated for v11.0)
 
-- **🚀 True Portability (Upgraded):** No installation required! Everything—including Python, FFmpeg, and **Node.js**—is bundled into a single, ready-to-use `.exe` file.
-- **🤖 YouTube Anti-Bot Bypass (NEW in v11.0):** Features an embedded Node.js runtime to automatically solve YouTube's new JavaScript security challenges. No external cookies or Node.js installations required!
-- **🕸️ Infinite Scraper Engine:** Automatically scrolls and scrapes all valid song links from an entire artist, category, or album page on complex platforms like Sarigama.lk.
-- **🧠 Smart Download Tracker:** Remembers previously downloaded songs and skips them automatically to save your data and time!
-- **🛡️ Bulletproof Downloading:** Automatically skips broken or restricted links (`ignoreerrors: True`) and continues downloading the rest of the playlist without crashing.
-- **🛑 Immediate Stop:** Instantly halt the entire download process at any time with a single click.
-- **🎨 Modern UI:** A clean, dark/light mode compatible user interface built with CustomTkinter, featuring real-time status updates and smooth animations.
-- **🔗 Hybrid Engine:** Automatically switches between `yt-dlp` and `Selenium` based on the source site to bypass restrictions.
+- **🚀 True Portability:** No installation required! Everything (including Python, Node.js, and FFmpeg) is bundled into a single, ready-to-use `.exe` file.
+- **🤖 Ultimate YouTube Bypass (Safe Mode):** YouTube blocking your downloads? If your browsers are busy or locked, the app automatically switches to a built-in "Safe Mode" to bypass restrictions and get your music safely.
+- **🛡️ Safe Engine Updates:** YouTube changes its security often. You can update the core download engine with a single click! Even if you stop or cancel the update halfway, the app won't break.
+- **🧹 Auto-Cleanup:** Stopped a download halfway? Don't worry about junk files. The app automatically cleans up incomplete or broken files to save your storage space.
+- **🧠 Smart Download Tracker:** It remembers previously downloaded songs and skips them automatically. No more downloading the same song twice!
+- **🕸️ Infinite Scraper Engine:** Just paste an artist or album link from platforms like Sarigama.lk, and the app will automatically scroll, find all the songs, and download them.
+- **🛑 Total Control:** Instantly stop the download process at any time, or refresh the app to start over with one click. 
 - **🎧 High Quality:** Extracts and converts audio directly to crystal-clear **192kbps MP3** format.
+
+---
+
+## ⚠️ Important Note About VPNs
+**Please turn off your VPN while using this app.** YouTube has very strict security against VPNs and proxy servers. If you try to download songs while a VPN is active, YouTube might block the connection, and your downloads will fail. For the best experience, use your normal internet connection.
 
 ---
 
 ## 🚀 How to Use (For Users)
 
-1. **Download:** Go to the [Releases](https://github.com/HansaHH/universal-hybrid-audio-downloader/releases) section and download the latest `.exe` file.
-2. **Run:** Double-click the executable (No Python, FFmpeg, or Node.js installation needed!).
+1. **Download:** Go to the [Releases](https://github.com/HansaHH/universal-hybrid-audio-downloader/releases) section and download the latest `UniversalMusicDownloader.exe`.
+2. **Run:** Double-click the file (No Python or FFmpeg installation needed).
 3. **Paste Link:** Enter the URL of the song, YouTube playlist, or a full artist/album page.
-4. **Download:** Click "Download" and let the app do the work! *(A `download_history.txt` file will automatically track your downloads so you never download duplicates).*
+4. **Download:** Click "Download Now" and let the app do the work! 
+5. *(Optional)* If YouTube downloads start failing after a few weeks, simply click the **"Update Security Engine"** button to get the latest bypass tools automatically.
 
 ---
 
@@ -39,8 +44,7 @@ Built with Python, this tool combines the power of `yt-dlp` and `Selenium` with 
 - **GUI:** CustomTkinter (Modern, hardware-accelerated UI)
 - **Web Automation:** Selenium & WebDriver Manager (For headless web scraping)
 - **Audio Extraction:** yt-dlp
-- **Anti-Bot Engine:** Node.js (Embedded)
-- **Dependencies:** Bundled FFmpeg & FFprobe for seamless audio conversion
+- **Dependencies:** Bundled FFmpeg, FFprobe, and Node.js
 - **Bundler:** PyInstaller
 
 ---
